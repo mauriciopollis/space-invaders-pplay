@@ -1,5 +1,6 @@
 from PPlay.window import *
 from PPlay.sprite import *
+from PPlay.gameimage import *
 
 DIFICULDADE = 1
 
@@ -8,14 +9,17 @@ def menu():
     #inicialização
     janela = Window(1280, 720)
     janela.set_title('Tela de Menu')
-    botao_jogar = Sprite("assets/botao_jogar.png", 1)
-    botao_jogar.set_position(400, 40)
-    botao_dificuldade = Sprite("assets/botao_dificuldade.png", 1)
-    botao_dificuldade.set_position(400, 200)
-    botao_ranking = Sprite("assets/botao_ranking.png", 1)
-    botao_ranking.set_position(400, 360)
-    botao_sair = Sprite("assets/botao_sair.png", 1)
-    botao_sair.set_position(400, 520)
+    fundo = GameImage("assets/fundo_espaco.jpg")
+    titulo = Sprite("assets/space_invaders_title.png", 1)
+    titulo.set_position(150, 20)
+    botao_jogar = Sprite("assets/base_botao.png", 1)
+    botao_jogar.set_position(195, 330)
+    botao_dificuldade = Sprite("assets/base_botao.png", 1)
+    botao_dificuldade.set_position(195, 430)
+    botao_ranking = Sprite("assets/base_botao.png", 1)
+    botao_ranking.set_position(685, 330)
+    botao_sair = Sprite("assets/base_botao.png", 1)
+    botao_sair.set_position(685, 430)
     mouse = janela.get_mouse()
     apertou_botao_esquerdo = False
 
@@ -40,11 +44,13 @@ def menu():
             janela.close()
 
         #desenho
-        janela.set_background_color((0,0,0))
+        #janela.set_background_color((0,0,0))
+        fundo.draw()
         botao_jogar.draw()
         botao_dificuldade.draw()
         botao_ranking.draw()
         botao_sair.draw()
+        titulo.draw()
         janela.update()
 
 def tela_de_jogo(janela):
