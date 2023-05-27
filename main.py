@@ -12,13 +12,13 @@ def menu():
     fundo = GameImage("assets/fundo_espaco.jpg")
     titulo = Sprite("assets/space_invaders_title.png", 1)
     titulo.set_position(150, 20)
-    botao_jogar = Sprite("assets/base_botao.png", 1)
+    botao_jogar = Sprite("assets/botao_jogar.png", 2)
     botao_jogar.set_position(195, 330)
-    botao_dificuldade = Sprite("assets/base_botao.png", 1)
+    botao_dificuldade = Sprite("assets/botao_dificuldade.png", 2)
     botao_dificuldade.set_position(195, 430)
-    botao_ranking = Sprite("assets/base_botao.png", 1)
+    botao_ranking = Sprite("assets/botao_ranking.png", 2)
     botao_ranking.set_position(685, 330)
-    botao_sair = Sprite("assets/base_botao.png", 1)
+    botao_sair = Sprite("assets/botao_sair.png", 2)
     botao_sair.set_position(685, 430)
     mouse = janela.get_mouse()
     apertou_botao_esquerdo = False
@@ -26,6 +26,36 @@ def menu():
     #loop
     while True:
 
+        #checa qual botão do menu foi apertado
+        if(mouse.is_over_object(botao_jogar)):
+            botao_jogar.set_curr_frame(1)
+            if(mouse.is_button_pressed(1)):
+                print("Jogar")
+                tela_de_jogo(janela)
+        else:
+            botao_jogar.set_curr_frame(0)
+        if(mouse.is_over_object(botao_dificuldade)):
+            botao_dificuldade.set_curr_frame(1)
+            if(mouse.is_button_pressed(1)):
+                print("Dificuldade")
+                tela_de_dificuldade(janela)
+        else:
+            botao_dificuldade.set_curr_frame(0)
+        if(mouse.is_over_object(botao_ranking)):
+            botao_ranking.set_curr_frame(1)
+            if(mouse.is_button_pressed(1)):
+                print("Ranking")
+        else:
+            botao_ranking.set_curr_frame(0)
+        if(mouse.is_over_object(botao_sair)):
+            botao_sair.set_curr_frame(1)
+            if(mouse.is_button_pressed(1)):
+                print("Sair")
+                janela.close()
+        else:
+            botao_sair.set_curr_frame(0)
+        
+        """
         #checa se o mouse está em cima de algum botão e se houve clique
         if(mouse.is_over_object(botao_jogar) and mouse.is_button_pressed(1) and not apertou_botao_esquerdo):
             print("Jogar")
@@ -42,6 +72,7 @@ def menu():
             print("Sair")
             apertou_botao_esquerdo = True
             janela.close()
+        """
 
         #desenho
         #janela.set_background_color((0,0,0))
