@@ -2,7 +2,7 @@ from PPlay.window import *
 from PPlay.sprite import *
 from PPlay.gameimage import *
 
-janela = Window(1000,720)
+janela = Window(1280,720)
 teclado = Window.get_keyboard()
 mouse = Window.get_mouse()
 fundo = GameImage("assets/fundo.jpeg")
@@ -11,9 +11,9 @@ jogar = Sprite("assets/jogar.png",1)
 dificuldade = Sprite("assets/dificuldade.png",1)
 rank = Sprite("assets/rank.png",1)
 sair = Sprite("assets/quit.png",1)
-facil = Sprite("assets/quit.png",1)
-medio = Sprite("assets/quit.png",1)
-dificil = Sprite("assets/quit.png",1)
+facil = Sprite("assets/botao_facil.png",1)
+medio = Sprite("assets/botao_medio.png",1)
+dificil = Sprite("assets/botao_dificil.png",1)
 
 nave = Sprite("assets/nave.png", 1)
 
@@ -72,10 +72,12 @@ def jogo():
         janela.update()
 
 def diff():
+
+    facil.set_position((janela.width - jogar.width)/2, facil.height/2)
+    medio.set_position((janela.width - jogar.width)/2, janela.height/2 - medio.height/2)
+    dificil.set_position((janela.width - jogar.width)/2, janela.height - dificil.height*3/2)
+    
     while(True):
-        facil.set_position((janela.width - jogar.width)/2, facil.height/2)
-        medio.set_position((janela.width - jogar.width)/2, janela.height/2 - medio.height/2)
-        dificil.set_position((janela.width - jogar.width)/2, janela.height - dificil.height*3/2)
 
         if mouse.is_over_object(facil) and mouse.is_button_pressed(1):
             jogo()
