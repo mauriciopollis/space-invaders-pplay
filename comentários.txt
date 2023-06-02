@@ -1,0 +1,1 @@
+Em geral, o código estava muito bom e fácil de ler, só tive que mudar a dimensão vertical da janela para que coubesse na tela do computador.
