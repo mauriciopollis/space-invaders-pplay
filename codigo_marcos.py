@@ -25,17 +25,19 @@ def jogo():
     velocidade_tiro = 200
     tempo_de_recarga = 0.3
     lista_tiros = []
-    cronometro = tempo_de_recarga + 1 # inicializa o cronometro maior que o tempo de recarga para que a nave possa atirar logo no início
+    timer_tiros = tempo_de_recarga + 1 # inicializa o cronometro maior que o tempo de recarga para que a nave possa atirar logo no início
     matriz_monstros = []
     linhas = 5
     colunas = 10
-    velocidade_monstro = 1000
+    velocidade_monstros = 100
+    colidiu = False
     morreu = False
 
     contador_de_frames = 0
     FPS = 0
     relogio = 0
 
+    #coloca os monstros na matriz
     for i in range(linhas):
         linha = []
         matriz_monstros.append(linha)
@@ -43,6 +45,7 @@ def jogo():
             monstro = Sprite("assets\monstro (1).png")
             linha.append(monstro)
 
+    # posiciona os monstros
     for i in range(len(matriz_monstros)):
         for j in range(len(matriz_monstros[i])):
             matriz_monstros[i][j].set_position(100 + j * (sprite_monstro.width + sprite_monstro.width/2), 50 + i * (sprite_monstro.height + sprite_monstro.height/2))
@@ -68,14 +71,14 @@ def jogo():
         
         #cria o tiro quando a barra de espaço é pressionada
         if(teclado.key_pressed("SPACE")):
-            if(cronometro >= tempo_de_recarga):
-                cronometro = 0
+            if(timer_tiros >= tempo_de_recarga):
+                timer_tiros = 0
                 tiro = Sprite("assets/tiro.png", 1)
                 tiro.set_position(nave.x + nave.width/2 - tiro.width/2, nave.y)
                 lista_tiros.append(tiro)
 
         #incrementa o cronometro de tiros
-        cronometro += dt
+        timer_tiros += dt
 
         #movimenta os tiros
         for tiro in lista_tiros:
@@ -86,15 +89,20 @@ def jogo():
             if(tiro.y<0):
                 lista_tiros.remove(tiro)
 
+        #função que checa se a matriz de monstros colidiu com as bordas e retorna a velocidade com a qual o conjunto dos monstros deve se mover
+        colidiu = checa_colisao(matriz_monstros, velocidade_monstros)
 
-        velocidade_monstro = checa_colisao(matriz_monstros, velocidade_monstro)
+        if colidiu:
+            velocidade_monstros = - velocidade_monstros
+        
+        #função que move o conjunto de monstros
+        move_monstros(matriz_monstros, dt, velocidade_monstros, colidiu)
 
-        move_monstros(matriz_monstros, dt, velocidade_monstro)
+        #função que checa se os monstros chegaram ao final da fase
+        morreu = checa_morte(matriz_monstros)
 
-        morreu = checa_morte(matriz_monstros, nave)
-        print(morreu)
-
-
+        if morreu:
+            menu()
         
         #FPS
         relogio += dt
@@ -104,14 +112,13 @@ def jogo():
             FPS = contador_de_frames
             contador_de_frames = 0
 
-
         fundo.draw()
-        janela.draw_text(str(FPS), 50, 50, 30, color=(255,0,0))
+        janela.draw_text(str(FPS), 40, 40, 30, color=(255,0,0))
         nave.draw()
 
-        for i in range(len(matriz_monstros)):
-            for j in range(len(matriz_monstros[i])):
-                matriz_monstros[i][j].draw()
+        for linha in matriz_monstros:
+            for monstro in linha:
+                monstro.draw()
 
         for tiro in lista_tiros:
             tiro.draw()
@@ -142,10 +149,14 @@ def diff():
         janela.update()
 
 def menu():
-    jogar.set_position((janela.width - jogar.width)/2,jogar.height/2)
-    dificuldade.set_position((janela.width - dificuldade.width)/2,dificuldade.height*2)
-    rank.set_position((janela.width - rank.width)/2,rank.height * 2 + rank.height* 3/2)
-    sair.set_position((janela.width - sair.width)/2,sair.height * 4 + sair.height)
+    
+    espaco_entre_botoes = janela.height - 4 * (jogar.height)
+    espaco_entre_botoes = espaco_entre_botoes / 5
+
+    jogar.set_position((janela.width - jogar.width)/2, espaco_entre_botoes)
+    dificuldade.set_position((janela.width - dificuldade.width)/2, jogar.y + jogar.height + espaco_entre_botoes)
+    rank.set_position((janela.width - rank.width)/2, dificuldade.y + dificuldade.height + espaco_entre_botoes)
+    sair.set_position((janela.width - sair.width)/2, rank.y + rank.height + espaco_entre_botoes)
 
     while (True):
         
@@ -168,41 +179,46 @@ def menu():
         sair.draw()
         janela.update()
 
-def move_monstros(matriz, dt, velocidade):
+def move_monstros(matriz, dt, velocidade, colidiu):
     for linha in matriz:
         for monstro in linha:
             monstro.x += velocidade * dt
+    if colidiu:
+        for linha in matriz:
+            for monstro in linha:
+                monstro.y += monstro.height
 
 def checa_colisao(matriz, velocidade):
+    colidiu = False
     if(velocidade > 0):
-        fronteira = matriz[0][-1]
-    else:
-        fronteira = matriz[0][0]
-
-    if fronteira.x < 100:
-        velocidade = -velocidade
+        fronteira = 0
         for linha in matriz:
             for monstro in linha:
-                monstro.y += monstro.height
-    elif (fronteira.x > (janela.width - 100)):
-        velocidade = -velocidade
+                if monstro.x > fronteira:
+                    fronteira = monstro.x
+        if fronteira > (janela.width - 100):
+            colidiu = True
+    else:
+        fronteira = janela.width
         for linha in matriz:
             for monstro in linha:
-                monstro.y += monstro.height
-    return velocidade
+                if monstro.x < fronteira:
+                    fronteira = monstro.x
+        if fronteira < 100:
+            colidiu = True
+    return colidiu
 
-def checa_morte(matriz, nave):
-    fronteira = matriz[-1][0]
-    if fronteira.y >= janela.height:
-        return True
-    else:
-        return False
-
-
+def checa_morte(matriz):
+    morreu = False
+    fronteira = 0
+    for linha in matriz:
+        for monstro in linha:
+            if((monstro.y + monstro.height) > fronteira):
+                fronteira = monstro.y + monstro.height
+                break
     
-
-    
-
-    
+    if fronteira >= janela.height:
+        morreu = True
+    return morreu
 
 menu()
