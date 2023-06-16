@@ -16,6 +16,7 @@ medio = Sprite("assets/botao_medio.png",1)
 dificil = Sprite("assets/botao_dificil.png",1)
 
 nave = Sprite("assets/nave.png", 1)
+sprite_monstro = Sprite("assets\monstro (1).png")
 
 def jogo():
 
@@ -25,6 +26,26 @@ def jogo():
     tempo_de_recarga = 0.3
     lista_tiros = []
     cronometro = tempo_de_recarga + 1 # inicializa o cronometro maior que o tempo de recarga para que a nave possa atirar logo no início
+    matriz_monstros = []
+    linhas = 5
+    colunas = 10
+    velocidade_monstro = 1000
+    morreu = False
+
+    contador_de_frames = 0
+    FPS = 0
+    relogio = 0
+
+    for i in range(linhas):
+        linha = []
+        matriz_monstros.append(linha)
+        for j in range(colunas):
+            monstro = Sprite("assets\monstro (1).png")
+            linha.append(monstro)
+
+    for i in range(len(matriz_monstros)):
+        for j in range(len(matriz_monstros[i])):
+            matriz_monstros[i][j].set_position(100 + j * (sprite_monstro.width + sprite_monstro.width/2), 50 + i * (sprite_monstro.height + sprite_monstro.height/2))
 
     while (True):
 
@@ -65,8 +86,33 @@ def jogo():
             if(tiro.y<0):
                 lista_tiros.remove(tiro)
 
+
+        velocidade_monstro = checa_colisao(matriz_monstros, velocidade_monstro)
+
+        move_monstros(matriz_monstros, dt, velocidade_monstro)
+
+        morreu = checa_morte(matriz_monstros, nave)
+        print(morreu)
+
+
+        
+        #FPS
+        relogio += dt
+        contador_de_frames += 1
+        if(relogio >= 1):
+            relogio = 0
+            FPS = contador_de_frames
+            contador_de_frames = 0
+
+
         fundo.draw()
+        janela.draw_text(str(FPS), 50, 50, 30, color=(255,0,0))
         nave.draw()
+
+        for i in range(len(matriz_monstros)):
+            for j in range(len(matriz_monstros[i])):
+                matriz_monstros[i][j].draw()
+
         for tiro in lista_tiros:
             tiro.draw()
         janela.update()
@@ -121,5 +167,42 @@ def menu():
         rank.draw()
         sair.draw()
         janela.update()
+
+def move_monstros(matriz, dt, velocidade):
+    for linha in matriz:
+        for monstro in linha:
+            monstro.x += velocidade * dt
+
+def checa_colisao(matriz, velocidade):
+    if(velocidade > 0):
+        fronteira = matriz[0][-1]
+    else:
+        fronteira = matriz[0][0]
+
+    if fronteira.x < 100:
+        velocidade = -velocidade
+        for linha in matriz:
+            for monstro in linha:
+                monstro.y += monstro.height
+    elif (fronteira.x > (janela.width - 100)):
+        velocidade = -velocidade
+        for linha in matriz:
+            for monstro in linha:
+                monstro.y += monstro.height
+    return velocidade
+
+def checa_morte(matriz, nave):
+    fronteira = matriz[-1][0]
+    if fronteira.y >= janela.height:
+        return True
+    else:
+        return False
+
+
+    
+
+    
+
+    
 
 menu()
