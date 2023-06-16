@@ -89,6 +89,13 @@ def jogo():
             if(tiro.y<0):
                 lista_tiros.remove(tiro)
 
+        for linha in matriz_monstros:
+            for monstro in linha:
+                for tiro in lista_tiros:
+                    if tiro.collided(monstro):
+                        lista_tiros.remove(tiro)
+                        linha.remove(monstro)
+
         #função que checa se a matriz de monstros colidiu com as bordas e retorna a velocidade com a qual o conjunto dos monstros deve se mover
         colidiu = checa_colisao(matriz_monstros, velocidade_monstros)
 
