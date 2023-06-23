@@ -209,25 +209,13 @@ def move_monstros(matriz, dt, velocidade, colidiu):
 
 def checa_colisao(matriz, velocidade, largura_borda):
     colidiu = False
-    fronteira = cria_fronteira(matriz, velocidade)
-    if fronteira > (janela.width - largura_borda) or fronteira < largura_borda:
-        colidiu = True
+    caixa = caixa_monstros(matriz)
+    if caixa != "matriz vazia":
+        esquerda = caixa[2]
+        direita = caixa[3]
+        if direita > (janela.width - largura_borda) or esquerda < largura_borda:
+            colidiu = True
     return colidiu
-
-def cria_fronteira(matriz, velocidade):
-    if(velocidade > 0):
-        fronteira = 0
-        for linha in matriz:
-            for monstro in linha:
-                if (monstro.x + monstro.width) > fronteira:
-                    fronteira = monstro.x + monstro.width
-    else:
-        fronteira = janela.width
-        for linha in matriz:
-            for monstro in linha:
-                if monstro.x < fronteira:
-                    fronteira = monstro.x
-    return fronteira
 
 def checa_morte(matriz):
     morreu = False
