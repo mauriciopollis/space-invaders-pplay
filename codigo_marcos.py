@@ -219,15 +219,11 @@ def checa_colisao(matriz, velocidade, largura_borda):
 
 def checa_morte(matriz):
     morreu = False
-    fronteira = 0
-    for linha in matriz:
-        for monstro in linha:
-            if((monstro.y + monstro.height) > fronteira):
-                fronteira = monstro.y + monstro.height
-                break
-    
-    if fronteira >= janela.height:
-        morreu = True
+    caixa = caixa_monstros(matriz)
+    if caixa != "matriz vazia":
+        baixo = caixa[1]
+        if baixo > janela.height - 50:
+            morreu = True
     return morreu
 
 #função que retorna os limites da 'caixa' que envolve os monstros
