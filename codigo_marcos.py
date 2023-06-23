@@ -32,6 +32,9 @@ def jogo():
     velocidade_monstros = 100
     colidiu = False
     morreu = False
+    pontos = 0
+    pts_ultimo_monstro = 0 # pontos recebidos pelo último monstro que foi morto
+    pixels_borda = 50 # variável que limita o quão perto das bordas laterais da janela os monstros vão antes de ter o movimento invertido
 
     contador_de_frames = 0
     FPS = 0
@@ -88,16 +91,23 @@ def jogo():
         for tiro in lista_tiros:
             if(tiro.y<0):
                 lista_tiros.remove(tiro)
+            
+        #colisão dos tiros com os monstros
+        for tiro in lista_tiros:
+            if tiro_dentro_caixa(tiro, matriz_monstros):
+                print("Dentro")
+                for linha in matriz_monstros:
+                    for monstro in linha:
+                        if tiro.collided(monstro):
+                            lista_tiros.remove(tiro)
+                            linha.remove(monstro)
+                            if linha == []:
+                                matriz_monstros.remove(linha)
+                            pts_ultimo_monstro = (janela.height - monstro.y)//10
+                            pontos += pts_ultimo_monstro
 
-        for linha in matriz_monstros:
-            for monstro in linha:
-                for tiro in lista_tiros:
-                    if tiro.collided(monstro):
-                        lista_tiros.remove(tiro)
-                        linha.remove(monstro)
-
-        #função que checa se a matriz de monstros colidiu com as bordas e retorna a velocidade com a qual o conjunto dos monstros deve se mover
-        colidiu = checa_colisao(matriz_monstros, velocidade_monstros)
+        #função que checa se a matriz de monstros colidiu com as bordas
+        colidiu = checa_colisao(matriz_monstros, velocidade_monstros, pixels_borda)
 
         if colidiu:
             velocidade_monstros = - velocidade_monstros
@@ -120,7 +130,9 @@ def jogo():
             contador_de_frames = 0
 
         fundo.draw()
-        janela.draw_text(str(FPS), 40, 40, 30, color=(255,0,0))
+        janela.draw_text(str(FPS), 40, (janela.height - 40), 30, color=(255,0,0))
+        janela.draw_text(f"pts : {str(pontos)}", 40, 40, 30, color=(255,0,0))
+        janela.draw_text(f"pts ultimo monstro : {str(pts_ultimo_monstro)}", 40, 80, 30, color=(255,0,0))
         nave.draw()
 
         for linha in matriz_monstros:
@@ -195,25 +207,27 @@ def move_monstros(matriz, dt, velocidade, colidiu):
             for monstro in linha:
                 monstro.y += monstro.height
 
-def checa_colisao(matriz, velocidade):
+def checa_colisao(matriz, velocidade, largura_borda):
     colidiu = False
+    fronteira = cria_fronteira(matriz, velocidade)
+    if fronteira > (janela.width - largura_borda) or fronteira < largura_borda:
+        colidiu = True
+    return colidiu
+
+def cria_fronteira(matriz, velocidade):
     if(velocidade > 0):
         fronteira = 0
         for linha in matriz:
             for monstro in linha:
-                if monstro.x > fronteira:
-                    fronteira = monstro.x
-        if fronteira > (janela.width - 100):
-            colidiu = True
+                if (monstro.x + monstro.width) > fronteira:
+                    fronteira = monstro.x + monstro.width
     else:
         fronteira = janela.width
         for linha in matriz:
             for monstro in linha:
                 if monstro.x < fronteira:
                     fronteira = monstro.x
-        if fronteira < 100:
-            colidiu = True
-    return colidiu
+    return fronteira
 
 def checa_morte(matriz):
     morreu = False
@@ -227,5 +241,36 @@ def checa_morte(matriz):
     if fronteira >= janela.height:
         morreu = True
     return morreu
+
+#função que retorna os limites da 'caixa' que envolve os monstros
+def caixa_monstros(matriz):
+    if matriz != []:
+        cima = matriz[0][0].y
+        baixo = matriz[-1][0].y + matriz[-1][0].height
+        esquerda = matriz[0][0].x
+        direita = matriz[0][-1].x + matriz[0][-1].width
+        for linha in matriz:
+            if linha[0].x < esquerda:
+                esquerda = linha[0].x
+            if((linha[-1].x + linha[-1].width) > direita):
+                direita = linha[-1].x + linha[-1].width
+        return (cima, baixo, esquerda, direita)
+    else:
+        return "matriz vazia"
+
+def tiro_dentro_caixa(tiro, matriz):
+    caixa = caixa_monstros(matriz)
+    if caixa != "matriz vazia":
+        cima = caixa[0]
+        baixo = caixa[1]
+        esquerda = caixa[2]
+        direita = caixa[3]
+        if((esquerda <= tiro.x <= direita - tiro.width) and (cima <= tiro.y <= baixo - tiro.height)):
+            return True
+        else:
+            return False
+    else:
+        return False
+    
 
 menu()
