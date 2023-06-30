@@ -1,6 +1,8 @@
 from PPlay.window import *
 from PPlay.sprite import *
 from PPlay.gameimage import *
+import random
+import time
 
 janela = Window(1280,720)
 teclado = Window.get_keyboard()
@@ -15,17 +17,26 @@ facil = Sprite("assets/botao_facil.png",1)
 medio = Sprite("assets/botao_medio.png",1)
 dificil = Sprite("assets/botao_dificil.png",1)
 
-nave = Sprite("assets/nave.png", 1)
+nave = Sprite("assets/nave.png", 2)
 sprite_monstro = Sprite("assets\monstro (1).png")
 
 def jogo():
 
     nave.set_position(janela.width/2 - nave.width/2, janela.height - nave.height - 5)
+    nave.set_sequence(0, 2, True)
+    nave.set_total_duration(300)
     velocidade_nave = 500
     velocidade_tiro = 200
+    velocidade_tiro_monstro = 200
     tempo_de_recarga = 0.3
+    tempo_recarga_media_monstros = 1
+    variacao_recarga_monstros = 0.3
+    tempo_de_recarga_monstros = random.uniform(tempo_recarga_media_monstros - variacao_recarga_monstros, 
+                                               tempo_recarga_media_monstros + variacao_recarga_monstros)
     lista_tiros = []
+    lista_tiros_monstros = []
     timer_tiros = tempo_de_recarga + 1 # inicializa o cronometro maior que o tempo de recarga para que a nave possa atirar logo no início
+    timer_tiros_monstros = tempo_recarga_media_monstros
     matriz_monstros = []
     linhas = 5
     colunas = 10
@@ -36,7 +47,11 @@ def jogo():
     pts_ultimo_monstro = 0 # pontos recebidos pelo último monstro que foi morto
     pixels_borda = 50 # variável que limita o quão perto das bordas laterais da janela os monstros vão antes de ter o movimento invertido
     vidas = 3
-    
+
+    tempo_invencibilidade = 2
+    instante_morte = -tempo_invencibilidade
+    invencivel = False
+
     contador_de_frames = 0
     FPS = 0
     relogio = 0
@@ -81,22 +96,38 @@ def jogo():
                 tiro.set_position(nave.x + nave.width/2 - tiro.width/2, nave.y)
                 lista_tiros.append(tiro)
 
+        # checa se os monstros podem atirar
+        if timer_tiros_monstros > tempo_de_recarga_monstros:
+            monstro_atira(matriz_monstros, lista_tiros_monstros)
+            timer_tiros_monstros = 0
+            tempo_de_recarga_monstros = random.uniform(tempo_recarga_media_monstros - variacao_recarga_monstros, 
+                                                       tempo_recarga_media_monstros + variacao_recarga_monstros)
+
         #incrementa o cronometro de tiros
         timer_tiros += dt
+        timer_tiros_monstros += dt
 
         #movimenta os tiros
         for tiro in lista_tiros:
             tiro.y -= velocidade_tiro * dt
+        
+        #movimenta os tiros dos monstros
+        for tiro in lista_tiros_monstros:
+            tiro.y += velocidade_tiro_monstro * dt
 
         #retira os tiros que saíram da janela
         for tiro in lista_tiros:
             if(tiro.y<0):
                 lista_tiros.remove(tiro)
-            
+        
+        #retira os tiros dos monstros que saíram da janela
+        for tiro in lista_tiros_monstros:
+            if(tiro.y > janela.height):
+                lista_tiros_monstros.remove(tiro)
+
         #colisão dos tiros com os monstros, começando a checagem pelos monstros mais baixos
         for tiro in lista_tiros:
             if tiro_dentro_caixa(tiro, matriz_monstros):
-                print("Dentro")
                 for i in range(len(matriz_monstros) - 1, -1, -1):
                     linha = matriz_monstros[i]
                     for monstro in linha:
@@ -107,6 +138,25 @@ def jogo():
                                 matriz_monstros.remove(linha)
                             pts_ultimo_monstro = (janela.height - monstro.y)//10
                             pontos += pts_ultimo_monstro
+
+        if(time.time() - instante_morte > tempo_invencibilidade):
+            invencivel = False
+            nave.set_curr_frame(0)
+        else:
+            nave.set_loop(True)
+
+        # colisao dos tiros dos monstros com a nave
+        for tiro in lista_tiros_monstros:
+            if tiro.collided(nave) and not invencivel:
+                lista_tiros_monstros.remove(tiro)
+                vidas -= 1
+                instante_morte = time.time()
+                invencivel = True
+                nave.x = janela.width/2 - nave.width/2
+                nave.y = janela.height - nave.height - 5
+
+        if vidas <= 0:
+            menu()
 
         #função que checa se a matriz de monstros colidiu com as bordas
         colidiu = checa_colisao(matriz_monstros, pixels_borda)
@@ -137,6 +187,7 @@ def jogo():
         #janela.draw_text(f"pts ultimo monstro : {str(pts_ultimo_monstro)}", 40, 120, 30, color=(255,0,0))
         janela.draw_text(f"vidas : {vidas}", 10, 80, 30, color=(255,0,0))
         nave.draw()
+        nave.update()
 
         for linha in matriz_monstros:
             for monstro in linha:
@@ -144,6 +195,10 @@ def jogo():
 
         for tiro in lista_tiros:
             tiro.draw()
+        
+        for tiro in lista_tiros_monstros:
+            tiro.draw()
+
         janela.update()
 
 def diff():
@@ -258,6 +313,22 @@ def tiro_dentro_caixa(tiro, matriz):
             return False
     else:
         return False
-    
+
+def sorteia_monstro(matriz):
+    num_linhas = len(matriz)
+    #sorteia a linha do monstro que vai atirar
+    i = random.randint(0, num_linhas - 1)
+    #sorteia o monstro da linha que vai atirar
+    num_colunas = len(matriz[i])
+    j = random.randint(0, num_colunas - 1)
+    return i, j
+
+def monstro_atira(matriz, tiros_monstros):
+    i, j = sorteia_monstro(matriz)
+    monstro = matriz[i][j]
+    tiro = Sprite("assets\\tiro_monstro.png")
+    tiro.x = monstro.x + monstro.width/2
+    tiro.y = monstro.y + monstro.height/2
+    tiros_monstros.append(tiro)
 
 menu()
