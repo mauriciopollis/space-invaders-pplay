@@ -98,10 +98,11 @@ def jogo():
 
         # checa se os monstros podem atirar
         if timer_tiros_monstros > tempo_de_recarga_monstros:
-            monstro_atira(matriz_monstros, lista_tiros_monstros)
-            timer_tiros_monstros = 0
-            tempo_de_recarga_monstros = random.uniform(tempo_recarga_media_monstros - variacao_recarga_monstros, 
-                                                       tempo_recarga_media_monstros + variacao_recarga_monstros)
+            if len(matriz_monstros) != 0:
+                monstro_atira(matriz_monstros, lista_tiros_monstros)
+                timer_tiros_monstros = 0
+                tempo_de_recarga_monstros = random.uniform(tempo_recarga_media_monstros - variacao_recarga_monstros, 
+                                                           tempo_recarga_media_monstros + variacao_recarga_monstros)
 
         #incrementa o cronometro de tiros
         timer_tiros += dt
