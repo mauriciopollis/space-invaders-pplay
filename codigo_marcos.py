@@ -32,8 +32,8 @@ def jogo(dificuldade, _pontos=0, _vidas=3):
     velocidade_tiro_monstro = 200 + 10 * dificuldade
     tempo_de_recarga = 0.3 + 0.1 * dificuldade
     tempo_recarga_media_monstros = 2 / dificuldade
-    linhas = 5 + dificuldade
-    colunas = 10 + 2 * dificuldade
+    linhas = 3 + 2 * dificuldade
+    colunas = 5 + 2 * dificuldade
     velocidade_monstros = 100 + 10 * dificuldade
 
     variacao_recarga_monstros = 0.3 * tempo_recarga_media_monstros
