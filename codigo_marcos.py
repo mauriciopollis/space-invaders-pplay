@@ -21,7 +21,7 @@ nave = Sprite("assets/nave.png", 2)
 sprite_monstro = Sprite("assets\monstro (1).png")
 
 def jogo(dificuldade, _pontos=0, _vidas=3):
-
+    
     nave.set_position(janela.width/2 - nave.width/2, janela.height - nave.height - 5)
     nave.set_sequence(0, 2, True)
     nave.set_total_duration(300)
