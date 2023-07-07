@@ -21,7 +21,7 @@ nave = Sprite("assets/nave.png", 2)
 sprite_monstro = Sprite("assets\monstro (1).png")
 
 def jogo(dificuldade, _pontos=0, _vidas=3):
-    
+
     nave.set_position(janela.width/2 - nave.width/2, janela.height - nave.height - 5)
     nave.set_sequence(0, 2, True)
     nave.set_total_duration(300)
@@ -228,39 +228,38 @@ def diff():
         janela.update()
 
 def ranking():
-    while True:
-
-        try:
-            # ordena os scores no arquivo
-            with open("ranking.txt", 'r', encoding='utf-8') as f:
-                ranking = f.readlines()
-                for i in range(len(ranking)):
-                    ranking[i] = ranking[i].strip('()\n')
-                    ranking[i] = ranking[i].split(',')
-                    ranking[i][1] = float(ranking[i][1])
+    try:
+        with open("ranking.txt", 'r', encoding='utf-8') as f:
+            ranking = f.readlines()
+            for i in range(len(ranking)):
+                ranking[i] = ranking[i].strip('()\n')
+                ranking[i] = ranking[i].split(',')
+                ranking[i][1] = float(ranking[i][1])
             ranking.sort(key=lambda x: x[1], reverse=True)
-
             top5 = ranking[0:5]
-            fundo.draw()
-            espacamento = (janela.height - 100) / len(top5)
-            i = 0
-            cabecalho = "      {:15}    {:10}{:8}     {:5}".format("NOME", "SCORE", "DATA", "HORARIO")
-            janela.draw_text(cabecalho, 10, 5, size=40, color=(255, 255, 255))
-            for score in top5:
-                nome = score[0]
-                pontuacao = score[1]
-                data = f"{score[2]}/{score[3]}/{score[4]}"
-                horario = f"{score[5]}:{score[6]}"
-                texto = f"#{i + 1}: {nome:15} {pontuacao:10}      {data:8} {horario:5}"
-                janela.draw_text(texto, 10, 100 + i * espacamento, size=40, color=(255,255,255))
-                i += 1
-            janela.update()
+    except FileNotFoundError:
+            top5 = []
 
-        except FileNotFoundError:
-            pass
+    espacamento = (janela.height - 100) / (len(top5) + 1)
+
+    while True:
 
         if teclado.key_pressed("ESC"):
             break
+        
+        fundo.draw()
+        i = 0
+        cabecalho = "      {:15}    {:10}{:8}     {:5}".format("NOME", "SCORE", "DATA", "HORARIO")
+        janela.draw_text(cabecalho, 10, 5, size=40, color=(255, 255, 255))
+        for score in top5:
+            nome = score[0]
+            pontuacao = score[1]
+            data = f"{score[2]}/{score[3]}/{score[4]}"
+            horario = f"{score[5]}:{score[6]}"
+            texto = f"#{i + 1}: {nome:15} {pontuacao:10}      {data:8} {horario:5}"
+            janela.draw_text(texto, 10, 100 + i * espacamento, size=40, color=(255,255,255))
+            i += 1
+        janela.update()
 
 def menu():
     
