@@ -7,7 +7,7 @@ import time
 janela = Window(1280,720)
 teclado = Window.get_keyboard()
 mouse = Window.get_mouse()
-fundo = GameImage("assets/fundo.jpeg")
+fundo = GameImage("assets/fundo_espaco.jpg")
 
 jogar = Sprite("assets/jogar.png",1)
 dificuldade = Sprite("assets/dificuldade.png",1)
@@ -20,17 +20,23 @@ dificil = Sprite("assets/botao_dificil.png",1)
 nave = Sprite("assets/nave.png", 2)
 sprite_monstro = Sprite("assets\monstro (1).png")
 
-def jogo():
+def jogo(dificuldade, _pontos=0, _vidas=3):
 
     nave.set_position(janela.width/2 - nave.width/2, janela.height - nave.height - 5)
     nave.set_sequence(0, 2, True)
     nave.set_total_duration(300)
-    velocidade_nave = 500
-    velocidade_tiro = 200
-    velocidade_tiro_monstro = 200
-    tempo_de_recarga = 0.3
-    tempo_recarga_media_monstros = 1
-    variacao_recarga_monstros = 0.3
+    
+    # variáveis afetadas pela dificuldade:
+    velocidade_nave = 500 - 10 * dificuldade
+    velocidade_tiro = 400 - 10 * dificuldade
+    velocidade_tiro_monstro = 200 + 10 * dificuldade
+    tempo_de_recarga = 0.3 + 0.1 * dificuldade
+    tempo_recarga_media_monstros = 2 / dificuldade
+    linhas = 5 + dificuldade
+    colunas = 10 + 2 * dificuldade
+    velocidade_monstros = 100 + 10 * dificuldade
+
+    variacao_recarga_monstros = 0.3 * tempo_recarga_media_monstros
     tempo_de_recarga_monstros = random.uniform(tempo_recarga_media_monstros - variacao_recarga_monstros, 
                                                tempo_recarga_media_monstros + variacao_recarga_monstros)
     lista_tiros = []
@@ -38,15 +44,12 @@ def jogo():
     timer_tiros = tempo_de_recarga + 1 # inicializa o cronometro maior que o tempo de recarga para que a nave possa atirar logo no início
     timer_tiros_monstros = tempo_recarga_media_monstros
     matriz_monstros = []
-    linhas = 5
-    colunas = 10
-    velocidade_monstros = 100
     colidiu = False
     morreu = False
-    pontos = 0
+    pontos = _pontos
     pts_ultimo_monstro = 0 # pontos recebidos pelo último monstro que foi morto
     pixels_borda = 50 # variável que limita o quão perto das bordas laterais da janela os monstros vão antes de ter o movimento invertido
-    vidas = 3
+    vidas = _vidas
 
     tempo_invencibilidade = 2
     instante_morte = -tempo_invencibilidade
@@ -135,8 +138,6 @@ def jogo():
                         if(tiro.collided(monstro)):
                             lista_tiros.remove(tiro)
                             linha.remove(monstro)
-                            if linha == []:
-                                matriz_monstros.remove(linha)
                             pts_ultimo_monstro = (janela.height - monstro.y)//10
                             pontos += pts_ultimo_monstro
 
@@ -148,7 +149,7 @@ def jogo():
 
         # colisao dos tiros dos monstros com a nave
         for tiro in lista_tiros_monstros:
-            if tiro.collided(nave) and not invencivel:
+            if tiro.collided_perfect(nave) and not invencivel:
                 lista_tiros_monstros.remove(tiro)
                 vidas -= 1
                 instante_morte = time.time()
@@ -156,11 +157,8 @@ def jogo():
                 nave.x = janela.width/2 - nave.width/2
                 nave.y = janela.height - nave.height - 5
 
-        if vidas <= 0:
-            menu()
-
         #função que checa se a matriz de monstros colidiu com as bordas
-        colidiu = checa_colisao(matriz_monstros, pixels_borda)
+        colidiu = checa_colisao(matriz_monstros, pixels_borda, velocidade_monstros, dt)
 
         if colidiu:
             velocidade_monstros = - velocidade_monstros
@@ -171,8 +169,12 @@ def jogo():
         #função que checa se os monstros chegaram ao limite inferior da tela
         morreu = checa_morte(matriz_monstros)
 
-        if morreu:
+        if morreu or vidas <= 0:
+            grava_ranking(pontos)
             menu()
+
+        if matriz_monstros == []:
+            jogo(dificuldade + 1, pontos, vidas)
         
         #FPS
         relogio += dt
@@ -185,7 +187,6 @@ def jogo():
         fundo.draw()
         janela.draw_text(f"FPS: {str(FPS)}", 10, (janela.height - 40), 30, color=(255,0,0))
         janela.draw_text(f"pontos : {int(pontos)}", 10, 40, 30, color=(255,0,0))
-        #janela.draw_text(f"pts ultimo monstro : {str(pts_ultimo_monstro)}", 40, 120, 30, color=(255,0,0))
         janela.draw_text(f"vidas : {vidas}", 10, 80, 30, color=(255,0,0))
         nave.draw()
         nave.update()
@@ -211,11 +212,11 @@ def diff():
     while(True):
 
         if mouse.is_over_object(facil) and mouse.is_button_pressed(1):
-            jogo()
+            jogo(dificuldade=1)
         if mouse.is_over_object(medio) and mouse.is_button_pressed(1):
-            jogo()
+            jogo(dificuldade=2)
         if mouse.is_over_object(dificil) and mouse.is_button_pressed(1):
-            jogo()
+            jogo(dificuldade=3)
         
         if teclado.key_pressed("ESC"):
             menu()
@@ -225,6 +226,41 @@ def diff():
         medio.draw()
         dificil.draw()
         janela.update()
+
+def ranking():
+    while True:
+
+        try:
+            # ordena os scores no arquivo
+            with open("ranking.txt", 'r', encoding='utf-8') as f:
+                ranking = f.readlines()
+                for i in range(len(ranking)):
+                    ranking[i] = ranking[i].strip('()\n')
+                    ranking[i] = ranking[i].split(',')
+                    ranking[i][1] = float(ranking[i][1])
+            ranking.sort(key=lambda x: x[1], reverse=True)
+
+            top5 = ranking[0:5]
+            fundo.draw()
+            espacamento = (janela.height - 100) / len(top5)
+            i = 0
+            cabecalho = "      {:15}    {:10}{:8}     {:5}".format("NOME", "SCORE", "DATA", "HORARIO")
+            janela.draw_text(cabecalho, 10, 5, size=40, color=(255, 255, 255))
+            for score in top5:
+                nome = score[0]
+                pontuacao = score[1]
+                data = f"{score[2]}/{score[3]}/{score[4]}"
+                horario = f"{score[5]}:{score[6]}"
+                texto = f"#{i + 1}: {nome:15} {pontuacao:10}      {data:8} {horario:5}"
+                janela.draw_text(texto, 10, 100 + i * espacamento, size=40, color=(255,255,255))
+                i += 1
+            janela.update()
+
+        except FileNotFoundError:
+            pass
+
+        if teclado.key_pressed("ESC"):
+            break
 
 def menu():
     
@@ -239,16 +275,16 @@ def menu():
     while (True):
         
         if mouse.is_over_object(jogar) and mouse.is_button_pressed(1):
-            jogo()
+            jogo(dificuldade=1)
 
         if mouse.is_over_object(dificuldade) and mouse.is_button_pressed(1):
             diff()
 
-        #if mouse.is_over_object(rank):
-            #if mouse.is_button_pressed(1):
+        if mouse.is_over_object(rank) and mouse.is_button_pressed(1):
+            ranking()
               
         if mouse.is_over_object(sair) and mouse.is_button_pressed(1):
-                janela.close()
+            janela.close()
 
         fundo.draw()
         jogar.draw()
@@ -264,9 +300,9 @@ def move_monstros(matriz, dt, velocidade, colidiu):
     if colidiu:
         for linha in matriz:
             for monstro in linha:
-                monstro.y += monstro.height
+                monstro.y += sprite_monstro.height
 
-def checa_colisao(matriz, largura_borda):
+def checa_colisao(matriz, largura_borda, velocidade, dt):
     colidiu = False
     caixa = caixa_monstros(matriz)
     if caixa != (0, 0, 0, 0):
@@ -274,6 +310,10 @@ def checa_colisao(matriz, largura_borda):
         direita = caixa[3]
         if direita > (janela.width - largura_borda) or esquerda < largura_borda:
             colidiu = True
+            for linha in matriz:
+                for monstro in linha:
+                    monstro.x = monstro.x - velocidade * dt
+
     return colidiu
 
 def checa_morte(matriz):
@@ -287,6 +327,9 @@ def checa_morte(matriz):
 
 #função que retorna os limites da 'caixa' que envolve os monstros
 def caixa_monstros(matriz):
+    for linha in matriz:
+        if linha == []:
+            matriz.remove(linha)
     if matriz != []:
         cima = matriz[0][0].y
         baixo = matriz[-1][0].y + matriz[-1][0].height
@@ -331,5 +374,19 @@ def monstro_atira(matriz, tiros_monstros):
     tiro.x = monstro.x + monstro.width/2
     tiro.y = monstro.y + monstro.height/2
     tiros_monstros.append(tiro)
+
+def grava_ranking(pontos=0):
+    data = time.localtime()
+    ano = data[0]
+    mes = data[1]
+    dia = data[2]
+    hora = data[3]
+    minuto = data[4]
+    nome = input("Insira seu nome: ")
+    score = f"{nome}, {pontos}, {dia}, {mes}, {ano}, {hora}, {minuto}\n"
+
+    # escreve o score atual no arquivo
+    with open("ranking.txt", 'a', encoding='utf-8') as f:
+        f.write(score)
 
 menu()
