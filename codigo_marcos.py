@@ -170,7 +170,7 @@ def jogo(dificuldade, _pontos=0, _vidas=3):
         morreu = checa_morte(matriz_monstros)
 
         if morreu or vidas <= 0:
-            grava_ranking(pontos)
+            #grava_ranking(pontos)
             menu()
 
         if matriz_monstros == []:
